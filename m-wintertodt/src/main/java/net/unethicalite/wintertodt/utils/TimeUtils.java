@@ -20,4 +20,5 @@ public class TimeUtils
 			duration.toMinutesPart(),
 			duration.toSecondsPart());
 	}
+
 }

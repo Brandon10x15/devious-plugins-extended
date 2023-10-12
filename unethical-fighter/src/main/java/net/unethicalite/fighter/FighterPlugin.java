@@ -43,6 +43,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static net.runelite.api.util.Numbers.getRandomNumber;
+import static net.unethicalite.api.commons.Time.sleep;
+
 @PluginDescriptor(
 		name = "Unethical Fighter",
 		description = "A simple auto fighter",
@@ -86,7 +89,7 @@ public class FighterPlugin extends LoopedPlugin
 		{
 			try
 			{
-				if (!Game.isLoggedIn())
+				if (!Game.isPlaying())
 				{
 					return;
 				}
@@ -102,7 +105,7 @@ public class FighterPlugin extends LoopedPlugin
 			}
 		}, 0, 100, TimeUnit.MILLISECONDS);
 
-		if (Game.isLoggedIn())
+		if (Game.isPlaying())
 		{
 			setCenter(Players.getLocal().getWorldLocation());
 		}
@@ -124,28 +127,60 @@ public class FighterPlugin extends LoopedPlugin
 		}
 	}
 
+    public int getRandomNumber(int min, int max)
+    {
+        return (int) ((Math.random() * (max - min)) + min);
+    }
+
+    public int getRandomNumberBetween(int min, int max)
+    {
+        min = min + getRandomNumber(-25, 25);
+        max = max + getRandomNumber(-25, 25);
+        return (int) ((Math.random() * (max - min)) + min);
+    }
+
+    public void sleepRandom(int min, int max)
+    {
+        min = min + getRandomNumber(-25, 25);
+        max = max + getRandomNumber(-25, 25);
+        sleep(getRandomNumberBetween(min, max));
+    }
+    public void sleepRand()
+    {
+        sleepRandom(50, 150);
+    }
+
 	@Override
 	protected int loop()
 	{
 		WorldPoint center = getCenter();
 		if (center == null)
 		{
-			if (Game.isLoggedIn())
+			if (Game.isPlaying())
 			{
 				setCenter(Players.getLocal().getWorldLocation());
 			}
 
+            sleepRand();
 			return -1;
 		}
-
-		if (Movement.isWalking())
-		{
-			return -4;
-		}
+        int tooFar = config.attackRange()/3;
+        if(tooFar < 1) { tooFar = 1; }
+        if(config.disableWalk() && Movement.calculateDistance(center) > 1) {
+            Movement.walkTo(center);
+            sleepRandom(300, 500);
+            return -4;
+        }
+        if (Movement.isWalking())
+        {
+            sleepRand();
+            return -4;
+        }
 
 		if (config.flick() && Prayers.isQuickPrayerEnabled())
 		{
 			Prayers.toggleQuickPrayer(false);
+            sleepRand();
 		}
 
 		if (config.eat() && Combat.getHealthPercent() <= config.healthPercent())
@@ -156,6 +191,7 @@ public class FighterPlugin extends LoopedPlugin
 			if (food != null)
 			{
 				food.interact("Eat");
+                sleepRand();
 				return -3;
 			}
 		}
@@ -167,6 +203,7 @@ public class FighterPlugin extends LoopedPlugin
 			if (restorePotion != null)
 			{
 				restorePotion.interact("Drink");
+                sleepRand();
 				return -3;
 			}
 		}
@@ -182,6 +219,7 @@ public class FighterPlugin extends LoopedPlugin
 			if (antipoison != null)
 			{
 				antipoison.interact("Drink");
+                sleepRand();
 				return -1;
 			}
 		}
@@ -192,9 +230,16 @@ public class FighterPlugin extends LoopedPlugin
 			if (bones != null)
 			{
 				bones.interact(bones.hasAction("Bury") ? "Bury" : "Scatter");
+                sleepRand();
 				return -1;
 			}
 		}
+
+        if (!Players.getLocal().isIdle() && !Dialog.canContinue())
+        {
+            sleepRandom(250, 2500);
+            return -4;
+        }
 
 		Player local = Players.getLocal();
 		TileItem loot = TileItems.getFirstSurrounding(center, config.attackRange(), x ->
@@ -203,13 +248,15 @@ public class FighterPlugin extends LoopedPlugin
 		);
 		if (loot != null && canPick(loot))
 		{
-			if (!Reachable.isInteractable(loot.getTile()))
+			if (!Reachable.isInteractable(loot.getTile()) && !config.disableWalk())
 			{
 				Movement.walkTo(loot.getTile().getWorldLocation());
+                sleepRand();
 				return -4;
 			}
 
 			loot.pickup();
+            sleepRand();
 			return -3;
 		}
 
@@ -223,6 +270,7 @@ public class FighterPlugin extends LoopedPlugin
 				if (alchItem != null)
 				{
 					Magic.cast(alchSpell.getSpell(), alchItem);
+                    sleepRand();
 					return -1;
 				}
 			}
@@ -230,6 +278,7 @@ public class FighterPlugin extends LoopedPlugin
 
 		if (local.getInteracting() != null && !Dialog.canContinue())
 		{
+            sleepRand();
 			return -1;
 		}
 
@@ -244,9 +293,14 @@ public class FighterPlugin extends LoopedPlugin
 			if (antifire != null)
 			{
 				antifire.interact("Drink");
+                sleepRand();
 				return -1;
 			}
 		}
+        if (!Movement.isRunEnabled() && Movement.getRunEnergy() > getRandomNumber(5,55))
+        {
+            Movement.toggleRun();
+        }
 
 		List<String> mobs = Text.fromCSV(config.monster());
 		NPC mob = Combat.getAttackableNPC(x -> x.getName() != null
@@ -258,20 +312,23 @@ public class FighterPlugin extends LoopedPlugin
 			if (local.getWorldLocation().distanceTo(center) < 3)
 			{
 				MessageUtils.addMessage("No attackable monsters in area");
+                sleepRand();
 				return -1;
 			}
-
 			Movement.walkTo(center);
+            sleepRand();
 			return -4;
 		}
 
-		if (!Reachable.isInteractable(mob))
+		if (!Reachable.isInteractable(mob) && !config.disableWalk())
 		{
 			Movement.walkTo(mob.getWorldLocation());
-			return -4;
+            sleepRand();
+            return -4;
 		}
 
 		mob.interact("Attack");
+        sleepRand();
 		return -3;
 	}
 

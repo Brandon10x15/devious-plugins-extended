@@ -1,7 +1,7 @@
 version = "0.0.8"
 
-project.extra["PluginName"] = "Unethical Fighter"
-project.extra["PluginDescription"] = "Simple fighter, supports eating, looting, alching, prayer potions, prayer flicking"
+project.extra["PluginName"] = "-randOsrs Fighter"
+project.extra["PluginDescription"] = "Simple fighter, supports eating, looting, alching, prayer potions, prayer flicking."
 
 tasks {
     jar {

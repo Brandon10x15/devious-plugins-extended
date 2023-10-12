@@ -1,7 +1,7 @@
 version = "0.0.8"
 
-project.extra["PluginName"] = "Unethical Fighter"
-project.extra["PluginDescription"] = "Simple fighter, supports eating, looting, alching, prayer potions, prayer flicking"
+project.extra["PluginName"] = "-randOsrs Task Manager"
+project.extra["PluginDescription"] = "Sweet script that will switch tasks and take breaks periodically."
 
 tasks {
     jar {

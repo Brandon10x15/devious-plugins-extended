@@ -233,7 +233,7 @@ public class ExplorerPlugin extends LoopedPlugin
 	@Override
 	protected int loop()
 	{
-		if (!Game.isLoggedIn() || client.getLocalPlayer() == null)
+		if (!Game.isPlaying() || client.getLocalPlayer() == null)
 		{
 			return -1;
 		}

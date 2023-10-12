@@ -37,9 +37,7 @@ include("hoot-tempoross")
 
 include("unethical-fighter")
 include("unethical-butler")
-include("unethical-birdhouses")
 include("unethical-kebab-buyer")
-include("unethical-autologin")
 include("unethical-oneclick")
 include("unethical-agility")
 include("unethical-prayer")
@@ -55,6 +53,11 @@ include("unethical-logout")
 include("m-autoswitcher")
 include("m-powerfisher")
 include("m-wintertodt")
+
+include("randOsrs-miner")
+include("randOsrs-taskManager")
+include("randOsrs-autoLogin")
+include("randOsrs-fighter")
 
 //include("example-kotlin")
 

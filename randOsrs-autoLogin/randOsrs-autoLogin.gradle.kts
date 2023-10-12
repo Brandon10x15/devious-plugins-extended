@@ -1,7 +1,11 @@
-version = "0.0.8"
+version = "0.0.2"
 
-project.extra["PluginName"] = "Unethical Fighter"
-project.extra["PluginDescription"] = "Simple fighter, supports eating, looting, alching, prayer potions, prayer flicking"
+project.extra["PluginName"] = "-randOsrs Auto Login"
+project.extra["PluginDescription"] = "Automatically logs in specified account in config."
+
+dependencies {
+    implementation("org.jboss.aerogear:aerogear-otp-java:1.0.0")
+}
 
 tasks {
     jar {

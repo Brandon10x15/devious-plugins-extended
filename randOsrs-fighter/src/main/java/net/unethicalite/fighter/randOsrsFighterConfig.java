@@ -6,8 +6,8 @@ import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.ConfigSection;
 import net.runelite.client.config.Range;
 
-@ConfigGroup("hootfighter")
-public interface FighterConfig extends Config
+@ConfigGroup("randosrs-fighter")
+public interface randOsrsFighterConfig extends Config
 {
 	@ConfigSection(
 			name = "General",
