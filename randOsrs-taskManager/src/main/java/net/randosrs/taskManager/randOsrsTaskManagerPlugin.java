@@ -5,12 +5,20 @@ import static net.unethicalite.api.commons.Time.sleepUntil;
 
 import net.randosrs.taskManager.tasks.*;
 import net.runelite.api.*;
+import net.runelite.api.events.Draw;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.events.PluginChanged;
 import net.runelite.client.plugins.music.MusicConfig;
+import net.runelite.client.plugins.unethicalite.ui.PanelContainer;
+import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayManager;
+import net.runelite.client.ui.overlay.OverlayPosition;
+import net.runelite.client.ui.overlay.OverlayPriority;
+import net.runelite.client.ui.overlay.components.LineComponent;
+import net.runelite.client.ui.overlay.components.PanelComponent;
+import net.runelite.client.ui.overlay.components.TitleComponent;
 import net.unethicalite.api.events.LoginStateChanged;
 import net.unethicalite.api.movement.pathfinder.model.MiningLocation;
 import net.unethicalite.api.plugins.SubscribedPlugin;
@@ -24,6 +32,8 @@ import net.unethicalite.client.Static;
 import org.pf4j.Extension;
 
 import javax.inject.Inject;
+import java.awt.*;
+import java.awt.Point;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -67,7 +77,7 @@ public class randOsrsTaskManagerPlugin extends SubscribedPlugin {
     @Override
     public void startUp() throws Exception {
         super.startUp();
-        overlayManager.add(randOsrsTaskManagerOverlay);
+        //overlayManager.add(randOsrsTaskManagerOverlay);
         executor = Executors.newSingleThreadScheduledExecutor();
         executor.scheduleWithFixedDelay(() ->
         {
@@ -80,7 +90,7 @@ public class randOsrsTaskManagerPlugin extends SubscribedPlugin {
     @Override
     public void shutDown() {
         stopPlugins();
-        overlayManager.remove(randOsrsTaskManagerOverlay);
+        //overlayManager.remove(randOsrsTaskManagerOverlay);
         if (executor != null) {
             executor.shutdown();
         }
@@ -88,6 +98,36 @@ public class randOsrsTaskManagerPlugin extends SubscribedPlugin {
 
     @Override
     public void refresh() {
+    }
+
+    @Subscribe
+    public void onDraw(Draw event)
+    {
+        Graphics2D graphics = (Graphics2D) event.getGraphics();
+        if (graphics == null)
+        {
+            return;
+        }
+        randOsrsTaskManagerOverlay.render(graphics);
+    }
+
+    private String printMillis(long millis) {
+        long hrs = 0;
+        long mins = 0;
+        long secs = 0;
+        while(millis > 3600000) {
+            hrs++;
+            millis -= 3600000;
+        }
+        while(millis > 60000) {
+            mins++;
+            millis -= 60000;
+        }
+        if(mins < 1) {
+            secs = millis/1000;
+        }
+
+        return hrs + "h " + mins + "m" + (mins < 1 ? " " + secs + "s" : "");
     }
 
     @Subscribe

@@ -107,10 +107,22 @@ public interface randOsrsFighterConfig extends Config
 	}
 
     @ConfigItem(
+            keyName = "switchStyles",
+            name = "Switch Attack Styles",
+            description = "Switches styles to keep Strength 5-10 levels above attack and defence.",
+            position = 2,
+            section = general
+    )
+    default boolean switchStyles()
+    {
+        return false;
+    }
+
+    @ConfigItem(
             keyName = "centerTile",
             name = "Center tile",
             description = "",
-            position = 2,
+            position = 3,
             section = general
     )
     default String centerTile()
@@ -122,7 +134,7 @@ public interface randOsrsFighterConfig extends Config
             keyName = "disableWalk",
             name = "Disable Walking",
             description = "",
-            position = 3,
+            position = 4,
             section = general
     )
     default boolean disableWalk()
@@ -134,7 +146,7 @@ public interface randOsrsFighterConfig extends Config
 			keyName = "bury",
 			name = "Bury bones",
 			description = "Bury bones",
-			position = 3,
+			position = 5,
 			section = general
 	)
 	default boolean buryBones()

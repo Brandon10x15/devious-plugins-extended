@@ -88,7 +88,7 @@ public class SwitchPluginTask extends TimedTask {
         availablePlugins = new ArrayList<>();
         if(plugin.getConfig().miningTaskEnabled()) {
             tasks++;
-            if(currentPlugin == pluginInfo.MINER) {
+            if(currentPlugin != pluginInfo.MINER) {
                 availablePlugins.add(pluginInfo.MINER);
             }
         }

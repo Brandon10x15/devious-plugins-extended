@@ -148,6 +148,12 @@ public class randOsrsFighterPlugin extends SubscribedPlugin
 
     private boolean attackMob() {
         if (!Game.isPlaying() || Game.isOnBreak() || Static.getClient().getLocalPlayer() == null) { return false; }
+        if(config.switchStyles()) {
+            String attackStyle = switchAttackStyle();
+            if (attackStyle != null) {
+                MessageUtils.success("Changed attack style to: " + attackStyle);
+            }
+        }
         NPC mob = Combat.getAttackableNPC(x -> x.getName() != null
                 && textMatches(getMobs(), x.getName())
                 && !x.isDead() && !x.isInteracting() && x.getCombatLevel() < Static.getClient().getLocalPlayer().getCombatLevel() * 0.6
@@ -171,7 +177,7 @@ public class randOsrsFighterPlugin extends SubscribedPlugin
         }
 
         mob.interact("Attack");
-        sleepUntil(() -> mob.isInteracting() || !Static.getClient().getLocalPlayer().isInteracting(), getRandomNumber(6000, 9000));
+        sleepUntil(mob::isInteracting, getRandomNumber(6000, 9000));
         return true;
     }
 
@@ -195,6 +201,15 @@ public class randOsrsFighterPlugin extends SubscribedPlugin
             Movement.walkTo(getCenter());
             sleepRand();
             return true;
+        }
+        return false;
+    }
+
+    private boolean mobDropsBones(Actor mob) {
+        if (!Game.isPlaying() || Game.isOnBreak() || Static.getClient().getLocalPlayer() == null) { return false; }
+        String[] mobs = {"Barbarian", "Chicken", "Cow", "Giant rat", "Goblin" };
+        for (var name : mobs) {
+            if(mob.getName().contains(name)) { return true; }
         }
         return false;
     }
@@ -250,7 +265,7 @@ public class randOsrsFighterPlugin extends SubscribedPlugin
             );
             if (antifire != null) {
                 antifire.interact("Drink");
-                sleepRand();
+                sleepRandTick(3);
                 return true;
             }
         }
@@ -266,7 +281,7 @@ public class randOsrsFighterPlugin extends SubscribedPlugin
                 Item alchItem = Inventory.getFirst(x -> x.getName() != null && textMatches(alchItems, x.getName()));
                 if (alchItem != null) {
                     Magic.cast(alchSpell.getSpell(), alchItem);
-                    sleepRand();
+                    sleepRandTick(3);
                     return true;
                 }
             }
@@ -274,17 +289,9 @@ public class randOsrsFighterPlugin extends SubscribedPlugin
         return false;
     }
 
-    private boolean mobDropsBones(Actor mob) {
-        if (!Game.isPlaying() || Game.isOnBreak() || Static.getClient().getLocalPlayer() == null) { return false; }
-        String[] mobs = {"Barbarian", };
-        for (var name : mobs) {
-            if(mob.getName().contains(name)) { return true; }
-        }
-        return false;
-    }
-
     private boolean lootItemsAction() {
         if (!Game.isPlaying() || Game.isOnBreak() || Static.getClient().getLocalPlayer() == null) { return false; }
+        if(Inventory.isFull() || (config.buryBones() && Inventory.getFreeSlots() < 2)) { return false; }
         TileItem loot = TileItems.getFirstSurrounding(getCenter(), config.attackRange(), x ->
                 !notOurItems.contains(x)
                         && !shouldNotLoot(x) && (shouldLootByName(x) || shouldLootUntradable(x) || shouldLootByValue(x)
@@ -295,6 +302,7 @@ public class randOsrsFighterPlugin extends SubscribedPlugin
 
     private boolean lootBonesAction(WorldPoint tile) {
         if (!Game.isPlaying() || Game.isOnBreak() || Static.getClient().getLocalPlayer() == null) { return false; }
+        if(Inventory.isFull()) { return false; }
         TileItem loot = TileItems.getFirstAt(tile, item ->
             !notOurItems.contains(item)
                     && (config.buryBones() && item.getName() != null && item.getName().toLowerCase().contains("bones"))
@@ -304,15 +312,17 @@ public class randOsrsFighterPlugin extends SubscribedPlugin
 
     private boolean pickupLoot(TileItem loot) {
         if (!Game.isPlaying() || Game.isOnBreak() || Static.getClient().getLocalPlayer() == null) { return false; }
+        if(Inventory.isFull()) { return false; }
         if (loot != null && canPick(loot)) {
             int tries = 0;
             while(!Reachable.isInteractable(loot.getTile()) && !config.disableWalk() && tries < 5) {
                 Movement.walkTo(loot.getTile().getWorldLocation());
-                sleepRand();
+                sleepRandTick(3);
                 tries++;
             }
+            int count = Inventory.getCount(loot.getName());
             loot.pickup();
-            sleepUntil(() -> loot.hasInventoryAction("Drop") || Inventory.isFull(), getRandomNumber(3000, 5000));
+            sleepUntil(() -> count != Inventory.getCount(loot.getName()), 5000);
             return true;
         }
         return false;
@@ -330,7 +340,7 @@ public class randOsrsFighterPlugin extends SubscribedPlugin
             );
             if (antipoison != null) {
                 antipoison.interact("Drink");
-                sleepRand();
+                sleepRandTick(3);
                 return true;
             }
         }
@@ -344,7 +354,7 @@ public class randOsrsFighterPlugin extends SubscribedPlugin
                     && (x.getName().contains("Prayer potion") || x.getName().contains("Super restore")));
             if (restorePotion != null) {
                 restorePotion.interact("Drink");
-                sleepRand();
+                sleepRandTick(3);
                 return true;
             }
         }
@@ -361,7 +371,7 @@ public class randOsrsFighterPlugin extends SubscribedPlugin
             if (food != null)
             {
                 food.interact("Eat");
-                sleepRand();
+                sleepRandTick(3);
                 return true;
             }
         }
@@ -373,12 +383,43 @@ public class randOsrsFighterPlugin extends SubscribedPlugin
         if (config.buryBones()) {
             Item bones = Inventory.getFirst(x -> x.hasAction("Bury") || x.hasAction("Scatter"));
             if (bones != null) {
+                int count = Inventory.getCount(bones.getName());
                 bones.interact(bones.hasAction("Bury") ? "Bury" : "Scatter");
-                sleepRand();
+                sleepUntil(() -> count != Inventory.getCount(bones.getName()), 3000);
                 return true;
             }
         }
         return false;
+    }
+
+    private String switchAttackStyle() {
+        for (int i = 10; i <= 100; i += 5) {
+            if(i == 100) { i--; }
+            if(Static.getClient().getRealSkillLevel(Skill.STRENGTH) < i) {
+                if(Combat.getAttackStyle() != Combat.AttackStyle.SECOND) {
+                    Combat.setAttackStyle(Combat.AttackStyle.SECOND); // Strength
+                    return "Strength";
+                }
+                break;
+            }
+            else {
+                if(i == 99) { i += 5; }
+                if(Static.getClient().getRealSkillLevel(Skill.ATTACK) < i-5) {
+                    if(Combat.getAttackStyle() != Combat.AttackStyle.FIRST) {
+                        Combat.setAttackStyle(Combat.AttackStyle.FIRST); // Attack
+                        return "Attack";
+                    }
+                    break;
+                } else if(Static.getClient().getRealSkillLevel(Skill.DEFENCE) < i-5) {
+                    if(Combat.getAttackStyle() != Combat.AttackStyle.FOURTH) {
+                        Combat.setAttackStyle(Combat.AttackStyle.FOURTH); // Defence
+                        return "Defence";
+                    }
+                    break;
+                }
+            }
+        }
+        return null;
     }
 
     @Subscribe

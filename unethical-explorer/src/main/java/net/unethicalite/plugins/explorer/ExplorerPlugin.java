@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
 
 @Extension
 @PluginDescriptor(
-		name = "Unethical Explorer",
+		name = "-Unethical Explorer",
 		description = "Right click anywhere within the World Map to walk there",
 		enabledByDefault = false
 )
@@ -238,10 +238,10 @@ public class ExplorerPlugin extends LoopedPlugin
 			return -1;
 		}
 
-		if (Movement.isWalking())
+		/*if (Movement.isWalking())
 		{
 			return -4;
-		}
+		}*/
 
 		if (destination == null
 				|| destination.distanceTo(Players.getLocal().getWorldLocation()) <= 2

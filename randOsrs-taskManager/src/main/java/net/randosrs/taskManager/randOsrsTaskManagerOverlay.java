@@ -17,7 +17,7 @@ public class randOsrsTaskManagerOverlay extends OverlayPanel {
     private randOsrsTaskManagerOverlay(randOsrsTaskManagerPlugin plugin)
     {
         this.plugin = plugin;
-        setPosition(OverlayPosition.TOP_LEFT);
+        setPosition(OverlayPosition.TOP_CENTER);
         setLayer(OverlayLayer.ALWAYS_ON_TOP);
         setPriority(OverlayPriority.HIGHEST);
     }
